@@ -31,7 +31,7 @@ function VolunteerDashboard() {
     },
     {
       id: 2,
-      name: "Michael Chen",
+      name: "Ajay",
       age: 28,
       email: "michael@example.com",
       phone: "(555) 234-5678",
@@ -44,7 +44,7 @@ function VolunteerDashboard() {
     },
     {
       id: 3,
-      name: "Emily Rodriguez",
+      name: "Vikram",
       age: 45,
       email: "emily@example.com",
       phone: "(555) 345-6789",
@@ -57,7 +57,7 @@ function VolunteerDashboard() {
     },
     {
       id: 4,
-      name: "James Wilson",
+      name: "Abhi",
       age: 29,
       email: "james@example.com",
       phone: "(555) 456-7890",
@@ -70,7 +70,7 @@ function VolunteerDashboard() {
     },
     {
       id: 5,
-      name: "Lisa Thompson",
+      name: "Raju",
       age: 36,
       email: "lisa@example.com",
       phone: "(555) 567-8901",
@@ -83,7 +83,7 @@ function VolunteerDashboard() {
     },
     {
       id: 6,
-      name: "David Kim",
+      name: "Lakshmi",
       age: 41,
       email: "david@example.com",
       phone: "(555) 678-9012",
