@@ -104,7 +104,7 @@ function ContactUs() {
         
         <div style={{ marginTop: "2rem", padding: "1rem", backgroundColor: "#f1f5f9", borderRadius: "8px" }}>
           <p style={{ margin: 0, color: "#64748b", fontSize: "14px", textAlign: "center" }}>
-            For emergencies, please call: <strong>1-800-123-HELP</strong>
+            For emergencies, please call: <strong>9032025629-HELP</strong>
           </p>
         </div>
       </div>
