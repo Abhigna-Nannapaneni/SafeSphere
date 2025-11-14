@@ -8,6 +8,9 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // ✅ Debug line to see what's in user object
+  console.log("User object in navbar:", user);
+
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
@@ -40,6 +43,13 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Helper function to get user initial
+  const getUserInitial = (user) => {
+    if (!user) return "U";
+    const name = user.name || user.firstName || user.fullName || user.email || 'User';
+    return name[0].toUpperCase();
+  };
 
   const navStyle = {
     display: "flex",
@@ -181,7 +191,8 @@ export default function Navbar() {
             }}
             title="View Profile"
           >
-            {user?.name ? user.fullname[0].toUpperCase() : "U"}
+            {/* ✅ FIXED: This line now properly gets the user initial */}
+            {getUserInitial(user)}
           </div>
 
           {/* Dropdown */}
