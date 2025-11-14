@@ -7,6 +7,7 @@ import {
   User,
   Eye,
   EyeOff,
+  CheckCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -14,6 +15,7 @@ function VolunteerAuth() {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -57,21 +59,41 @@ function VolunteerAuth() {
     }
 
     try {
-      let url = isLogin
-        ? "http://localhost:8080/api/volunteer/login"
-        : "http://localhost:8080/api/volunteer/signup";
-
-      // Prepare data for backend
-      let submitData;
       if (isLogin) {
-        // For login: only email and password
-        submitData = {
+        // LOGIN API CALL
+        const loginData = {
           email: formData.email,
           password: formData.password
         };
+
+        console.log("Login API call:", loginData);
+
+        const res = await fetch("http://localhost:8080/api/volunteer/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(loginData),
+        });
+
+        const responseData = await res.json();
+        console.log("Login response:", responseData);
+
+        if (!res.ok) {
+          throw new Error(responseData.error || responseData.message || "Login failed");
+        }
+
+        // Login successful - store user data and redirect to ResponsePage
+        const userData = {
+          ...responseData,
+          isLoggedIn: true,
+          loginTime: new Date().toISOString()
+        };
+        
+        login(userData);
+        navigate("/volunteer-dashboard");
+
       } else {
-        // For signup: all fields except confirmPassword
-        submitData = {
+        // SIGNUP API CALL
+        const signupData = {
           fullName: formData.fullName,
           email: formData.email,
           password: formData.password,
@@ -79,27 +101,34 @@ function VolunteerAuth() {
           skills: formData.skills,
           location: formData.location
         };
+
+        console.log("Signup API call:", signupData);
+
+        const res = await fetch("http://localhost:8080/api/volunteer/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(signupData),
+        });
+
+        const responseData = await res.json();
+        console.log("Signup response:", responseData);
+
+        if (!res.ok) {
+          throw new Error(responseData.error || responseData.message || "Signup failed");
+        }
+
+        // Signup successful - show success message and clear form
+        setSignupSuccess(true);
+        setFormData({
+          fullName: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          phone: "",
+          skills: "",
+          location: "",
+        });
       }
-
-      console.log("Sending to backend:", submitData);
-
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(submitData),
-      });
-
-      const responseData = await res.json();
-      console.log("Backend response:", responseData);
-
-      if (!res.ok) {
-        // Handle backend errors
-        throw new Error(responseData.error || responseData.message || `HTTP error! status: ${res.status}`);
-      }
-
-      // If we get here, request was successful
-      login(responseData);
-      navigate("/volunteer-dashboard");
 
     } catch (error) {
       console.error("Submission error:", error);
@@ -107,6 +136,11 @@ function VolunteerAuth() {
     }
 
     setIsLoading(false);
+  };
+
+  const handleSwitchToLogin = () => {
+    setSignupSuccess(false);
+    setIsLogin(true);
   };
 
   return (
@@ -133,175 +167,190 @@ function VolunteerAuth() {
             </h2>
           </div>
 
-          {/* Toggle */}
-          <div className="flex mb-8 bg-blue-50 rounded-lg p-1">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 rounded-lg transition-colors ${
-                isLogin 
-                  ? "bg-blue-600 text-white shadow-md" 
-                  : "text-blue-700 hover:bg-blue-100"
-              }`}
-            >
-              Login
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 rounded-lg transition-colors ${
-                !isLogin 
-                  ? "bg-blue-600 text-white shadow-md" 
-                  : "text-blue-700 hover:bg-blue-100"
-              }`}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <>
-                {/* Name */}
-                <div className="relative">
-                  <User className="absolute left-3 top-3.5 text-blue-500" />
-                  <input
-                    type="text"
-                    name="fullName"
-                    placeholder="Full Name"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.fullName ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.fullName && (
-                    <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-                  )}
-                </div>
-
-                {/* Phone + Location */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    name="phone"
-                    placeholder="Phone Number"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="text"
-                    name="location"
-                    placeholder="Location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* Skills */}
-                <input
-                  type="text"
-                  name="skills"
-                  placeholder="Skills (e.g., First Aid, CPR, Rescue Operations)"
-                  value={formData.skills}
-                  onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </>
-            )}
-
-            {/* Email */}
-            <div className="relative">
-              <Mail className="absolute left-3 top-3.5 text-blue-500" />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+          {/* Success Message after Signup */}
+          {signupSuccess && (
+            <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+              <div className="flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                <p className="font-semibold">Signup successful!</p>
+              </div>
+              <p className="text-sm mt-1">Please login with your credentials.</p>
+              <button
+                onClick={handleSwitchToLogin}
+                className="mt-2 text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+              >
+                Continue to Login
+              </button>
             </div>
+          )}
 
-            {/* Password */}
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 text-blue-500" />
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                }`}
-              />
+          {/* Toggle - Hide when signup success is shown */}
+          {!signupSuccess && (
+            <div className="flex mb-8 bg-blue-50 rounded-lg p-1">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-gray-500 hover:text-gray-700"
+                onClick={() => setIsLogin(true)}
+                className={`flex-1 py-3 rounded-lg transition-colors ${
+                  isLogin 
+                    ? "bg-blue-600 text-white shadow-md" 
+                    : "text-blue-700 hover:bg-blue-100"
+                }`}
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                Login
               </button>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
-            </div>
 
-            {/* Confirm Password (Signup only) */}
-            {!isLogin && (
+              <button
+                type="button"
+                onClick={() => setIsLogin(false)}
+                className={`flex-1 py-3 rounded-lg transition-colors ${
+                  !isLogin 
+                    ? "bg-blue-600 text-white shadow-md" 
+                    : "text-blue-700 hover:bg-blue-100"
+                }`}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+
+          {/* Form - Hide when signup success is shown */}
+          {!signupSuccess && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <>
+                  {/* Name */}
+                  <div className="relative">
+                    <User className="absolute left-3 top-3.5 text-blue-500" />
+                    <input
+                      type="text"
+                      name="fullName"
+                      placeholder="Full Name"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        errors.fullName ? "border-red-500" : "border-gray-300"
+                      }`}
+                    />
+                    {errors.fullName && (
+                      <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+                    )}
+                  </div>
+
+                  {/* Phone + Location */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="phone"
+                      placeholder="Phone Number"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                      type="text"
+                      name="location"
+                      placeholder="Location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Skills */}
+                  <input
+                    type="text"
+                    name="skills"
+                    placeholder="Skills (e.g., First Aid, CPR, Rescue Operations)"
+                    value={formData.skills}
+                    onChange={handleChange}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </>
+              )}
+
+              {/* Email */}
+              <div className="relative">
+                <Mail className="absolute left-3 top-3.5 text-blue-500" />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Password */}
               <div className="relative">
                 <Lock className="absolute left-3 top-3.5 text-blue-500" />
                 <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  name="confirmPassword"
-                  placeholder="Confirm Password"
-                  value={formData.confirmPassword}
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
                   onChange={handleChange}
                   className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                    errors.password ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3.5 text-gray-500 hover:text-gray-700"
                 >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
-                {errors.confirmPassword && (
-                  <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                 )}
               </div>
-            )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full py-3 rounded-lg font-semibold text-white transition-colors ${
-                isLoading
-                  ? "bg-blue-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isLoading ? "Processing..." : isLogin ? "Login" : "Sign Up"}
-            </button>
-          </form>
+              {/* Confirm Password (Signup only) */}
+              {!isLogin && (
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3.5 text-blue-500" />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    placeholder="Confirm Password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`w-full p-3 pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.confirmPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-3.5 text-gray-500 hover:text-gray-700"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                  )}
+                </div>
+              )}
 
-          {/* Debug info (remove in production) */}
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
-            <p>Current mode: {isLogin ? "Login" : "Signup"}</p>
-            <p>Loading: {isLoading ? "Yes" : "No"}</p>
-          </div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full py-3 rounded-lg font-semibold text-white transition-colors ${
+                  isLoading
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+              >
+                {isLoading ? "Processing..." : isLogin ? "Login" : "Sign Up"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

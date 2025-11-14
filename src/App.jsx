@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import VolunteerProfile from "./pages/VolunteerProfile";
 import { AuthProvider } from "./context/AuthContext";
 import ResponsePage from "./pages/Responses";
+
 function App() {
   return (
     <AuthProvider>
@@ -41,7 +42,8 @@ function MainLayout() {
           <Route path="/request-help" element={<RequestHelp />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
-          <Route path="/volunteer-dashboard" element={<VolunteerDashboard />} />
+          {/* ✅ CHANGED: Volunteer dashboard now shows ResponsePage */}
+          <Route path="/volunteer-dashboard" element={<ResponsePage />} />
           <Route path="/contact" element={<ContactUs />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
